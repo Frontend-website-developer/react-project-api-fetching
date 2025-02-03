@@ -10,7 +10,7 @@ const API_OPTIONS = {
   method: 'GET',
   headers: {
     accept: 'application/json',
-  Authorization: `Bearer ${API_KEY}`
+  Authorization: `Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxY2E2MjhjZWMyZTk5MGY1ZjZiZjQ2OTlhMzBjYmYxZiIsIm5iZiI6MTczODUwNDQ2Ni4zMTIsInN1YiI6IjY3OWY3OTEyZTk5ZGYyM2E5ZjI2NGYxYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.X-mQBrAqcPAcDUmrC5z4fg3BaSOdPWYQQcv2cDwaYzY`
   } 
 }
 
