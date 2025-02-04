@@ -2,6 +2,9 @@ import { useEffect, useState } from "react"
 import Search from "./components/Search"
 import MovieCard from "./components/MovieCard";
 
+import { useDebounce } from "react-use";
+import { getTrendingMovies, updateSearchCount } from "./appwrite";
+
 const API_BASE_URL = 'https://api.themoviedb.org/3';
 
 const API_KEY = import.meta.env.VITE_TMDB_API_KEY;
@@ -19,13 +22,17 @@ const App = () => {
   const [searchTerm, setsearchTerm] = useState();
   const [errorMessage, seterrorMessage] = useState();
   const [movie, setmovie] =useState([]);
+  const [trendingMovies, settrendingMovies] =useState([]);
   const [isloading, setisloading] = useState(false);
+  const [debouncedsearchTerm, setdebouncedsearchTerm] = useState();
 
-  const fetchMovies = async () => {
+  useDebounce(() => setdebouncedsearchTerm(searchTerm), 500, [searchTerm])
+
+  const fetchMovies = async (query = '') => {
     setisloading(true);
     seterrorMessage('');
     try{
-      const endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+      const endpoint = query ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}` : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
 
       const response = await fetch(endpoint, API_OPTIONS );
 
@@ -43,6 +50,10 @@ const App = () => {
 
       setmovie(data.results || []);
 
+      if(query && data.results.length > 0){
+        await updateSearchCount(query, data.results[0]);
+      }
+
     }
     catch(error){
       console.error(`Error fetching movies ${error}`);
@@ -53,9 +64,28 @@ const App = () => {
     }
   }
 
+  const loadTrendingMovies = async() => {
+    try{
+      const movies = await getTrendingMovies();
+
+      settrendingMovies(movies);
+
+    }
+    catch(error){
+      console.error(`Error fetching trending movies ${error}`);
+
+    }
+  }
+
   useEffect(() => {
-    fetchMovies();
-  }, []);
+    fetchMovies(debouncedsearchTerm);
+  }, [debouncedsearchTerm]);
+
+  useEffect(() => {
+    loadTrendingMovies();
+  }, []
+
+  );
   
   return(
     <main>
@@ -67,8 +97,23 @@ const App = () => {
               <Search searchTerm={searchTerm} setsearchTerm={setsearchTerm} />
           </header>
           
+          {trendingMovies.length > 0 && (
+            <section className="trending">
+              <h2>Trending Movies</h2>
+
+              <ul>
+                {trendingMovies.map((movie, index) => (
+                  <li key={movie.$id}>
+                    <p>{index + 1}</p>
+                    <img src={movie.poster_url} alt={movie.title} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section className="all-movies">
-              <h2 className="mt-[20px]">All Movies</h2>
+              <h2>All Movies</h2>
 
               {isloading ? (
                 <p className="text-white">Loading...</p>
